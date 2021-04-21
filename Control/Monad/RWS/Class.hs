@@ -1,8 +1,17 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- Search for UndecidableInstances to see why this is needed
+#if __GLASGOW_HASKELL__ >= 702 && __GLASGOW_HASKELL__ < 810
+{-# LANGUAGE Safe #-}
+#else
+{-# LANGUAGE Trustworthy #-}
+#endif
+#if MIN_VERSION_base(4,14,0)
+{-# LANGUAGE PartialTypeConstructors, TypeOperators #-}
+#endif
 
 -----------------------------------------------------------------------------
 -- |
@@ -43,13 +52,24 @@ import Control.Monad.Trans.RWS.Lazy as Lazy (RWST)
 import qualified Control.Monad.Trans.RWS.Strict as Strict (RWST)
 
 import Data.Monoid
+#if MIN_VERSION_base(4,14,0)
+import GHC.Types (type (@@), Total)
+#endif
 
 class (Monoid w, MonadReader r m, MonadWriter w m, MonadState s m)
    => MonadRWS r w s m | m -> r, m -> w, m -> s
 
-instance (Monoid w, Monad m) => MonadRWS r w s (Lazy.RWST r w s m)
+instance (Monoid w, Monad m
+#if MIN_VERSION_base(4,14,0)
+      , Total m
+#endif
+         ) => MonadRWS r w s (Lazy.RWST r w s m)
 
-instance (Monoid w, Monad m) => MonadRWS r w s (Strict.RWST r w s m)
+instance (Monoid w, Monad m
+#if MIN_VERSION_base(4,14,0)
+      , Total m
+#endif
+         ) => MonadRWS r w s (Strict.RWST r w s m)
  
 ---------------------------------------------------------------------------
 -- Instances for other mtl transformers
@@ -58,7 +78,23 @@ instance (Monoid w, Monad m) => MonadRWS r w s (Strict.RWST r w s m)
 -- because they do not satisfy the coverage condition.
 
 -- | @since 2.2
-instance MonadRWS r w s m => MonadRWS r w s (ExceptT e m)
-instance (Error e, MonadRWS r w s m) => MonadRWS r w s (ErrorT e m)
-instance MonadRWS r w s m => MonadRWS r w s (IdentityT m)
-instance MonadRWS r w s m => MonadRWS r w s (MaybeT m)
+instance (MonadRWS r w s m
+#if MIN_VERSION_base(4,14,0)
+      , Total m
+#endif
+         ) => MonadRWS r w s (ExceptT e m)
+instance (Error e, MonadRWS r w s m
+#if MIN_VERSION_base(4,14,0)
+      , Total m
+#endif
+         ) => MonadRWS r w s (ErrorT e m)
+instance (MonadRWS r w s m
+#if MIN_VERSION_base(4,14,0)
+      , Total m
+#endif
+         ) => MonadRWS r w s (IdentityT m)
+instance (MonadRWS r w s m
+#if MIN_VERSION_base(4,14,0)
+      , Total m
+#endif
+         ) => MonadRWS r w s (MaybeT m)
