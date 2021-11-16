@@ -10,7 +10,7 @@
 {-# LANGUAGE Trustworthy #-}
 #endif
 #if MIN_VERSION_base(4,14,0)
-{-# LANGUAGE PartialTypeConstructors, TypeOperators #-}
+{-# LANGUAGE PartialTypeConstructors, TypeOperators, UndecidableSuperClasses #-}
 #endif
 
 -----------------------------------------------------------------------------

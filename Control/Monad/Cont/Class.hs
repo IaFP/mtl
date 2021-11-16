@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 #if MIN_VERSION_base(4,14,0)
-{-# LANGUAGE PartialTypeConstructors, TypeOperators, UndecidableInstances #-}
+{-# LANGUAGE PartialTypeConstructors, TypeOperators, UndecidableInstances, UndecidableSuperClasses #-}
 #endif
 {- |
 Module      :  Control.Monad.Cont.Class
