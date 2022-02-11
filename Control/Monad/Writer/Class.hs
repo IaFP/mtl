@@ -4,7 +4,9 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
 -- Search for UndecidableInstances to see why this is needed
-
+#if MIN_VERSION_base(4,16,0)
+{-# LANGUAGE QuantifiedConstraints, DefaultSignatures, ExplicitNamespaces #-}
+#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Control.Monad.Writer.Class
@@ -49,7 +51,9 @@ import qualified Control.Monad.Trans.Writer.Strict as Strict (
 import Control.Monad.Trans.Class (lift)
 import Control.Monad
 import Data.Monoid
-
+#if MIN_VERSION_base(4,16,0)
+import GHC.Types (type (@), Total)
+#endif
 -- ---------------------------------------------------------------------------
 -- MonadWriter class
 --
@@ -68,6 +72,9 @@ class (Monoid w, Monad m) => MonadWriter w m | m -> w where
 #endif
     -- | @'writer' (a,w)@ embeds a simple writer action.
     writer :: (a,w) -> m a
+#if MIN_VERSION_base(4,16,0)
+    default writer :: (m @ ()) => (a,w) -> m a
+#endif
     writer ~(a, w) = do
       tell w
       return a
@@ -88,7 +95,11 @@ class (Monoid w, Monad m) => MonadWriter w m | m -> w where
 -- the result of applying @f@ to the output to the value of the computation.
 --
 -- * @'listens' f m = 'liftM' (id *** f) ('listen' m)@
-listens :: MonadWriter w m => (w -> b) -> m a -> m (a, b)
+listens :: (
+#if MIN_VERSION_base(4,16,0)
+           m @ (a, w),
+#endif
+           MonadWriter w m) => (w -> b) -> m a -> m (a, b)
 listens f m = do
     ~(a, w) <- listen m
     return (a, f w)
@@ -98,7 +109,11 @@ listens f m = do
 -- unchanged.
 --
 -- * @'censor' f m = 'pass' ('liftM' (\\x -> (x,f)) m)@
-censor :: MonadWriter w m => (w -> w) -> m a -> m a
+censor :: (
+#if MIN_VERSION_base(4,16,0)
+           m @ (a, w -> w), 
+#endif
+          MonadWriter w m) => (w -> w) -> m a -> m a
 censor f m = pass $ do
     a <- m
     return (a, f)
@@ -114,25 +129,41 @@ instance (Monoid w) => MonadWriter w ((,) w) where
   pass ~(w, (a, f)) = (f w, a)
 #endif
 
-instance (Monoid w, Monad m) => MonadWriter w (Lazy.WriterT w m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       Monoid w, Monad m) => MonadWriter w (Lazy.WriterT w m) where
     writer = Lazy.writer
     tell   = Lazy.tell
     listen = Lazy.listen
     pass   = Lazy.pass
 
-instance (Monoid w, Monad m) => MonadWriter w (Strict.WriterT w m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       Monoid w, Monad m) => MonadWriter w (Strict.WriterT w m) where
     writer = Strict.writer
     tell   = Strict.tell
     listen = Strict.listen
     pass   = Strict.pass
 
-instance (Monoid w, Monad m) => MonadWriter w (LazyRWS.RWST r w s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       Monoid w, Monad m) => MonadWriter w (LazyRWS.RWST r w s m) where
     writer = LazyRWS.writer
     tell   = LazyRWS.tell
     listen = LazyRWS.listen
     pass   = LazyRWS.pass
 
-instance (Monoid w, Monad m) => MonadWriter w (StrictRWS.RWST r w s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       Monoid w, Monad m) => MonadWriter w (StrictRWS.RWST r w s m) where
     writer = StrictRWS.writer
     tell   = StrictRWS.tell
     listen = StrictRWS.listen
@@ -144,44 +175,72 @@ instance (Monoid w, Monad m) => MonadWriter w (StrictRWS.RWST r w s m) where
 -- All of these instances need UndecidableInstances,
 -- because they do not satisfy the coverage condition.
 
-instance (Error e, MonadWriter w m) => MonadWriter w (ErrorT e m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       Error e, MonadWriter w m) => MonadWriter w (ErrorT e m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Error.liftListen listen
     pass   = Error.liftPass pass
 
 -- | @since 2.2
-instance MonadWriter w m => MonadWriter w (ExceptT e m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadWriter w m) => MonadWriter w (ExceptT e m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Except.liftListen listen
     pass   = Except.liftPass pass
 
-instance MonadWriter w m => MonadWriter w (IdentityT m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadWriter w m) => MonadWriter w (IdentityT m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Identity.mapIdentityT listen
     pass   = Identity.mapIdentityT pass
 
-instance MonadWriter w m => MonadWriter w (MaybeT m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadWriter w m) => MonadWriter w (MaybeT m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Maybe.liftListen listen
     pass   = Maybe.liftPass pass
 
-instance MonadWriter w m => MonadWriter w (ReaderT r m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadWriter w m) => MonadWriter w (ReaderT r m) where
     writer = lift . writer
     tell   = lift . tell
     listen = mapReaderT listen
     pass   = mapReaderT pass
 
-instance MonadWriter w m => MonadWriter w (Lazy.StateT s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadWriter w m) => MonadWriter w (Lazy.StateT s m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Lazy.liftListen listen
     pass   = Lazy.liftPass pass
 
-instance MonadWriter w m => MonadWriter w (Strict.StateT s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadWriter w m) => MonadWriter w (Strict.StateT s m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Strict.liftListen listen

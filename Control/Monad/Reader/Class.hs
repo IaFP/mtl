@@ -3,6 +3,10 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
+#if __GLASGOW_HASKELL__ >= 903
+{-# LANGUAGE QuantifiedConstraints, ExplicitNamespaces, DefaultSignatures #-}
+#endif
+
 -- Search for UndecidableInstances to see why this is needed
 {- |
 Module      :  Control.Monad.Reader.Class
@@ -64,6 +68,9 @@ import Control.Monad.Trans.Writer.Strict as Strict
 import Control.Monad.Trans.Class (lift)
 import Control.Monad
 import Data.Monoid
+#if MIN_VERSION_base(4,16,0)
+import GHC.Types (type (@), Total)
+#endif
 
 -- ----------------------------------------------------------------------------
 -- class MonadReader
@@ -88,6 +95,10 @@ class Monad m => MonadReader r m | m -> r where
     -- | Retrieves a function of the current environment.
     reader :: (r -> a) -- ^ The selector function to apply to the environment.
            -> m a
+#if MIN_VERSION_base(4,16,0)
+    default reader :: (m @ r) => (r -> a) -- ^ The selector function to apply to the environment.
+                   -> m a
+#endif
     reader f = do
       r <- ask
       return (f r)
@@ -106,17 +117,29 @@ instance MonadReader r ((->) r) where
     local f m = m . f
     reader    = id
 
-instance Monad m => MonadReader r (ReaderT r m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+  Monad m) => MonadReader r (ReaderT r m) where
     ask = ReaderT.ask
     local = ReaderT.local
     reader = ReaderT.reader
 
-instance (Monad m, Monoid w) => MonadReader r (LazyRWS.RWST r w s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+        Monad m, Monoid w) => MonadReader r (LazyRWS.RWST r w s m) where
     ask = LazyRWS.ask
     local = LazyRWS.local
     reader = LazyRWS.reader
 
-instance (Monad m, Monoid w) => MonadReader r (StrictRWS.RWST r w s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+        Monad m, Monoid w) => MonadReader r (StrictRWS.RWST r w s m) where
     ask = StrictRWS.ask
     local = StrictRWS.local
     reader = StrictRWS.reader
@@ -127,53 +150,93 @@ instance (Monad m, Monoid w) => MonadReader r (StrictRWS.RWST r w s m) where
 -- All of these instances need UndecidableInstances,
 -- because they do not satisfy the coverage condition.
 
-instance MonadReader r' m => MonadReader r' (ContT r m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+        MonadReader r' m) => MonadReader r' (ContT r m) where
     ask   = lift ask
     local = Cont.liftLocal ask local
     reader = lift . reader
 
-instance (Error e, MonadReader r m) => MonadReader r (ErrorT e m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+        Error e, MonadReader r m) => MonadReader r (ErrorT e m) where
     ask   = lift ask
     local = mapErrorT . local
     reader = lift . reader
 
 {- | @since 2.2 -}
-instance MonadReader r m => MonadReader r (ExceptT e m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+          Total m,
+#endif
+          MonadReader r m) => MonadReader r (ExceptT e m) where
     ask   = lift ask
     local = mapExceptT . local
     reader = lift . reader
 
-instance MonadReader r m => MonadReader r (IdentityT m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+        MonadReader r m) => MonadReader r (IdentityT m) where
     ask   = lift ask
     local = mapIdentityT . local
     reader = lift . reader
 
-instance MonadReader r m => MonadReader r (ListT m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+        MonadReader r m) => MonadReader r (ListT m) where
     ask   = lift ask
     local = mapListT . local
     reader = lift . reader
 
-instance MonadReader r m => MonadReader r (MaybeT m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+        MonadReader r m) => MonadReader r (MaybeT m) where
     ask   = lift ask
     local = mapMaybeT . local
     reader = lift . reader
 
-instance MonadReader r m => MonadReader r (Lazy.StateT s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+        MonadReader r m) => MonadReader r (Lazy.StateT s m) where
     ask   = lift ask
     local = Lazy.mapStateT . local
     reader = lift . reader
 
-instance MonadReader r m => MonadReader r (Strict.StateT s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+        MonadReader r m) => MonadReader r (Strict.StateT s m) where
     ask   = lift ask
     local = Strict.mapStateT . local
     reader = lift . reader
 
-instance (Monoid w, MonadReader r m) => MonadReader r (Lazy.WriterT w m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+        Monoid w, MonadReader r m) => MonadReader r (Lazy.WriterT w m) where
     ask   = lift ask
     local = Lazy.mapWriterT . local
     reader = lift . reader
 
-instance (Monoid w, MonadReader r m) => MonadReader r (Strict.WriterT w m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+        Total m,
+#endif
+        Monoid w, MonadReader r m) => MonadReader r (Strict.WriterT w m) where
     ask   = lift ask
     local = Strict.mapWriterT . local
     reader = lift . reader

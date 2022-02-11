@@ -3,7 +3,9 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
-
+#if MIN_VERSION_base(4,16,0)
+{-# LANGUAGE QuantifiedConstraints #-}
+#endif
 {- |
 Module      :  Control.Monad.Error.Class
 Copyright   :  (c) Michael Weber <michael.weber@post.rwth-aachen.de> 2001,
@@ -69,7 +71,9 @@ import Control.Monad.Instances ()
 
 import Data.Monoid
 import Prelude (Either(..), Maybe(..), either, (.), IO)
-
+#if MIN_VERSION_base(4,16,0)
+import GHC.Types (Total)
+#endif
 {- |
 The strategy of combining computations that can throw exceptions
 by bypassing bound functions
@@ -136,12 +140,20 @@ instance MonadError e (Either e) where
     Left  l `catchError` h = h l
     Right r `catchError` _ = Right r
 
-instance (Monad m, Error e) => MonadError e (ErrorT e m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       Monad m, Error e) => MonadError e (ErrorT e m) where
     throwError = ErrorT.throwError
     catchError = ErrorT.catchError
 
 {- | @since 2.2 -}
-instance Monad m => MonadError e (ExceptT e m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       Monad m) => MonadError e (ExceptT e m) where
     throwError = ExceptT.throwE
     catchError = ExceptT.catchE
 
@@ -151,42 +163,82 @@ instance Monad m => MonadError e (ExceptT e m) where
 -- All of these instances need UndecidableInstances,
 -- because they do not satisfy the coverage condition.
 
-instance MonadError e m => MonadError e (IdentityT m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadError e m) => MonadError e (IdentityT m) where
     throwError = lift . throwError
     catchError = Identity.liftCatch catchError
 
-instance MonadError e m => MonadError e (ListT m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadError e m) => MonadError e (ListT m) where
     throwError = lift . throwError
     catchError = List.liftCatch catchError
 
-instance MonadError e m => MonadError e (MaybeT m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadError e m) => MonadError e (MaybeT m) where
     throwError = lift . throwError
     catchError = Maybe.liftCatch catchError
 
-instance MonadError e m => MonadError e (ReaderT r m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadError e m) => MonadError e (ReaderT r m) where
     throwError = lift . throwError
     catchError = Reader.liftCatch catchError
 
-instance (Monoid w, MonadError e m) => MonadError e (LazyRWS.RWST r w s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       Monoid w, MonadError e m) => MonadError e (LazyRWS.RWST r w s m) where
     throwError = lift . throwError
     catchError = LazyRWS.liftCatch catchError
 
-instance (Monoid w, MonadError e m) => MonadError e (StrictRWS.RWST r w s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       Monoid w, MonadError e m) => MonadError e (StrictRWS.RWST r w s m) where
     throwError = lift . throwError
     catchError = StrictRWS.liftCatch catchError
 
-instance MonadError e m => MonadError e (LazyState.StateT s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadError e m) => MonadError e (LazyState.StateT s m) where
     throwError = lift . throwError
     catchError = LazyState.liftCatch catchError
 
-instance MonadError e m => MonadError e (StrictState.StateT s m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       MonadError e m) => MonadError e (StrictState.StateT s m) where
     throwError = lift . throwError
     catchError = StrictState.liftCatch catchError
 
-instance (Monoid w, MonadError e m) => MonadError e (LazyWriter.WriterT w m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       Monoid w, MonadError e m) => MonadError e (LazyWriter.WriterT w m) where
     throwError = lift . throwError
     catchError = LazyWriter.liftCatch catchError
 
-instance (Monoid w, MonadError e m) => MonadError e (StrictWriter.WriterT w m) where
+instance (
+#if MIN_VERSION_base(4,16,0)
+       Total m,
+#endif
+       Monoid w, MonadError e m) => MonadError e (StrictWriter.WriterT w m) where
     throwError = lift . throwError
     catchError = StrictWriter.liftCatch catchError
