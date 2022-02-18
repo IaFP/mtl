@@ -4,7 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
 #if __GLASGOW_HASKELL__ >= 903
-{-# LANGUAGE QuantifiedConstraints, ExplicitNamespaces, DefaultSignatures #-}
+{-# LANGUAGE QuantifiedConstraints, ExplicitNamespaces, DefaultSignatures, TypeOperators, UndecidableSuperClasses #-}
 #endif
 
 -- Search for UndecidableInstances to see why this is needed
@@ -79,7 +79,11 @@ import GHC.Types (type (@), Total)
 -- | See examples in "Control.Monad.Reader".
 -- Note, the partially applied function type @(->) r@ is a simple reader monad.
 -- See the @instance@ declaration below.
-class Monad m => MonadReader r m | m -> r where
+class (
+#if MIN_VERSION_base(4,16,0)
+  m @ r,
+#endif
+  Monad m) => MonadReader r m | m -> r where
 #if __GLASGOW_HASKELL__ >= 707
     {-# MINIMAL (ask | reader), local #-}
 #endif
@@ -119,7 +123,7 @@ instance MonadReader r ((->) r) where
 
 instance (
 #if MIN_VERSION_base(4,16,0)
-        Total m,
+   Total m,
 #endif
   Monad m) => MonadReader r (ReaderT r m) where
     ask = ReaderT.ask
