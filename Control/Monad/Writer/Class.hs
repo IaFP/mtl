@@ -129,41 +129,25 @@ instance (Monoid w) => MonadWriter w ((,) w) where
   pass ~(w, (a, f)) = (f w, a)
 #endif
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       Monoid w, Monad m) => MonadWriter w (Lazy.WriterT w m) where
+instance (Monoid w, Applicative m, Monad m) => MonadWriter w (Lazy.WriterT w m) where
     writer = Lazy.writer
     tell   = Lazy.tell
     listen = Lazy.listen
     pass   = Lazy.pass
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       Monoid w, Monad m) => MonadWriter w (Strict.WriterT w m) where
+instance (Monoid w, Applicative m, Monad m) => MonadWriter w (Strict.WriterT w m) where
     writer = Strict.writer
     tell   = Strict.tell
     listen = Strict.listen
     pass   = Strict.pass
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       Monoid w, Monad m) => MonadWriter w (LazyRWS.RWST r w s m) where
+instance (Monoid w, Applicative m, Monad m) => MonadWriter w (LazyRWS.RWST r w s m) where
     writer = LazyRWS.writer
     tell   = LazyRWS.tell
     listen = LazyRWS.listen
     pass   = LazyRWS.pass
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       Monoid w, Monad m) => MonadWriter w (StrictRWS.RWST r w s m) where
+instance (Monoid w, Applicative m, Monad m) => MonadWriter w (StrictRWS.RWST r w s m) where
     writer = StrictRWS.writer
     tell   = StrictRWS.tell
     listen = StrictRWS.listen
@@ -175,72 +159,44 @@ instance (
 -- All of these instances need UndecidableInstances,
 -- because they do not satisfy the coverage condition.
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       Error e, MonadWriter w m) => MonadWriter w (ErrorT e m) where
+instance (Error e, Applicative m, MonadWriter w m) => MonadWriter w (ErrorT e m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Error.liftListen listen
     pass   = Error.liftPass pass
 
 -- | @since 2.2
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadWriter w m) => MonadWriter w (ExceptT e m) where
+instance (Applicative m, MonadWriter w m) => MonadWriter w (ExceptT e m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Except.liftListen listen
     pass   = Except.liftPass pass
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadWriter w m) => MonadWriter w (IdentityT m) where
+instance (Applicative m, MonadWriter w m) => MonadWriter w (IdentityT m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Identity.mapIdentityT listen
     pass   = Identity.mapIdentityT pass
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadWriter w m) => MonadWriter w (MaybeT m) where
+instance (Applicative m, MonadWriter w m) => MonadWriter w (MaybeT m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Maybe.liftListen listen
     pass   = Maybe.liftPass pass
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadWriter w m) => MonadWriter w (ReaderT r m) where
+instance (Applicative m, MonadWriter w m) => MonadWriter w (ReaderT r m) where
     writer = lift . writer
     tell   = lift . tell
     listen = mapReaderT listen
     pass   = mapReaderT pass
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadWriter w m) => MonadWriter w (Lazy.StateT s m) where
+instance (Applicative m, MonadWriter w m) => MonadWriter w (Lazy.StateT s m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Lazy.liftListen listen
     pass   = Lazy.liftPass pass
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadWriter w m) => MonadWriter w (Strict.StateT s m) where
+instance (Applicative m, MonadWriter w m) => MonadWriter w (Strict.StateT s m) where
     writer = lift . writer
     tell   = lift . tell
     listen = Strict.liftListen listen
