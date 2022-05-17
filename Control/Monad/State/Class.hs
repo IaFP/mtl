@@ -54,13 +54,13 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad
 import Data.Monoid
 #if MIN_VERSION_base(4,16,0)
-import GHC.Types (type (@), Total)
+import GHC.Types (type (@))
 #endif
 
 -- ---------------------------------------------------------------------------
 
 -- | Minimal definition is either both of @get@ and @put@ or just @state@
-class Monad m => MonadState s m | m -> s where
+class (Applicative m, Monad m) => MonadState s m | m -> s where
     -- | Return the state from the internals of the monad.
     get :: m s
     get = state (\s -> (s, s))
@@ -71,9 +71,6 @@ class Monad m => MonadState s m | m -> s where
 
     -- | Embed a simple state action into the monad.
     state :: (s -> (a, s)) -> m a
-#if MIN_VERSION_base(4,16,0)
-    default state :: (m @ s, m @ ()) =>  (s -> (a, s)) -> m a
-#endif
     state f = do
       s <- get
       let ~(a, s') = f s
@@ -101,58 +98,34 @@ modify f = state (\s -> ((), f s))
 -- new state.
 --
 -- @since 2.2
-modify' :: (
-#if MIN_VERSION_base(4,16,0)
-           m @ s,
-#endif
-  MonadState s m) => (s -> s) -> m ()
+modify' :: (MonadState s m) => (s -> s) -> m ()
 modify' f = do
   s' <- get
   put $! f s'
 
 -- | Gets specific component of the state, using a projection function
 -- supplied.
-gets :: (
-#if MIN_VERSION_base(4,16,0)
-           m @ s,
-#endif
-  MonadState s m) => (s -> a) -> m a
+gets :: (MonadState s m) => (s -> a) -> m a
 gets f = do
     s <- get
     return (f s)
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-        Monad m) => MonadState s (Lazy.StateT s m) where
+instance (Applicative m, Monad m) => MonadState s (Lazy.StateT s m) where
     get = Lazy.get
     put = Lazy.put
     state = Lazy.state
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  Monad m) => MonadState s (Strict.StateT s m) where
+instance (Applicative m, Monad m) => MonadState s (Strict.StateT s m) where
     get = Strict.get
     put = Strict.put
     state = Strict.state
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  Monad m, Monoid w) => MonadState s (LazyRWS.RWST r w s m) where
+instance (Applicative m, Monad m, Monoid w) => MonadState s (LazyRWS.RWST r w s m) where
     get = LazyRWS.get
     put = LazyRWS.put
     state = LazyRWS.state
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  Monad m, Monoid w) => MonadState s (StrictRWS.RWST r w s m) where
+instance (Applicative m, Monad m, Monoid w) => MonadState s (StrictRWS.RWST r w s m) where
     get = StrictRWS.get
     put = StrictRWS.put
     state = StrictRWS.state
@@ -163,84 +136,48 @@ instance (
 -- All of these instances need UndecidableInstances,
 -- because they do not satisfy the coverage condition.
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  MonadState s m) => MonadState s (ContT r m) where
+instance (MonadState s m) => MonadState s (ContT r m) where
     get = lift get
     put = lift . put
     state = lift . state
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  Error e, MonadState s m) => MonadState s (ErrorT e m) where
+instance (Error e, MonadState s m) => MonadState s (ErrorT e m) where
     get = lift get
     put = lift . put
     state = lift . state
 
 -- | @since 2.2
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  MonadState s m) => MonadState s (ExceptT e m) where
+instance (MonadState s m) => MonadState s (ExceptT e m) where
     get = lift get
     put = lift . put
     state = lift . state
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  MonadState s m) => MonadState s (IdentityT m) where
+instance (MonadState s m) => MonadState s (IdentityT m) where
     get = lift get
     put = lift . put
     state = lift . state
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  MonadState s m) => MonadState s (ListT m) where
+instance (MonadState s m) => MonadState s (ListT m) where
     get = lift get
     put = lift . put
     state = lift . state
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  MonadState s m) => MonadState s (MaybeT m) where
+instance (MonadState s m) => MonadState s (MaybeT m) where
     get = lift get
     put = lift . put
     state = lift . state
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  MonadState s m) => MonadState s (ReaderT r m) where
+instance (MonadState s m) => MonadState s (ReaderT r m) where
     get = lift get
     put = lift . put
     state = lift . state
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  Monoid w, MonadState s m) => MonadState s (Lazy.WriterT w m) where
+instance (Monoid w, MonadState s m) => MonadState s (Lazy.WriterT w m) where
     get = lift get
     put = lift . put
     state = lift . state
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  Monoid w, MonadState s m) => MonadState s (Strict.WriterT w m) where
+instance (Monoid w, MonadState s m) => MonadState s (Strict.WriterT w m) where
     get = lift get
     put = lift . put
     state = lift . state

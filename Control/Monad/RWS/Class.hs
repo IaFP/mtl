@@ -47,24 +47,13 @@ import Control.Monad.Trans.RWS.Lazy as Lazy (RWST)
 import qualified Control.Monad.Trans.RWS.Strict as Strict (RWST)
 
 import Data.Monoid
-#if MIN_VERSION_base(4,16,0)
-import GHC.Types (Total)
-#endif
 
 class (Monoid w, MonadReader r m, MonadWriter w m, MonadState s m)
    => MonadRWS r w s m | m -> r, m -> w, m -> s
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  Monoid w, Monad m) => MonadRWS r w s (Lazy.RWST r w s m)
+instance (Applicative m, Monoid w, Monad m) => MonadRWS r w s (Lazy.RWST r w s m)
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  Monoid w, Monad m) => MonadRWS r w s (Strict.RWST r w s m)
+instance (Applicative m, Monoid w, Monad m) => MonadRWS r w s (Strict.RWST r w s m)
  
 ---------------------------------------------------------------------------
 -- Instances for other mtl transformers
@@ -73,23 +62,7 @@ instance (
 -- because they do not satisfy the coverage condition.
 
 -- | @since 2.2
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  MonadRWS r w s m) => MonadRWS r w s (ExceptT e m)
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  Error e, MonadRWS r w s m) => MonadRWS r w s (ErrorT e m)
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  MonadRWS r w s m) => MonadRWS r w s (IdentityT m)
-instance (
-#if MIN_VERSION_base(4,16,0)
-        Total m,
-#endif
-  MonadRWS r w s m) => MonadRWS r w s (MaybeT m)
+instance (MonadRWS r w s m) => MonadRWS r w s (ExceptT e m)
+instance (Error e, MonadRWS r w s m) => MonadRWS r w s (ErrorT e m)
+instance (MonadRWS r w s m) => MonadRWS r w s (IdentityT m)
+instance (MonadRWS r w s m) => MonadRWS r w s (MaybeT m)

@@ -74,10 +74,10 @@ import Control.Monad.Trans.Writer.Strict as StrictWriter
 import Control.Monad
 import Data.Monoid
 #if MIN_VERSION_base(4,16,0)
-import GHC.Types (type (@), Total)
+import GHC.Types (type (@))
 #endif
 
-class Monad m => MonadCont m where
+class (Applicative m, Monad m) => MonadCont m where
     {- | @callCC@ (call-with-current-continuation)
     calls a function with the current continuation as its argument.
     Provides an escape continuation mechanism for use with Continuation monads.
@@ -101,97 +101,45 @@ class Monad m => MonadCont m where
     {-# MINIMAL callCC #-}
 #endif
 
-instance 
-#if MIN_VERSION_base(4,16,0)
-       m @ r => -- this just needs m @ r, but explicit name spaces causes callCC to be abmiguiosly reference. urgh!
-#endif
-       MonadCont (ContT r m) where
+instance MonadCont (ContT r m) where
     callCC = ContT.callCC
 
 -- ---------------------------------------------------------------------------
 -- Instances for other mtl transformers
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       Error e, MonadCont m) => MonadCont (ErrorT e m) where
+instance (Error e, MonadCont m) => MonadCont (ErrorT e m) where
     callCC = Error.liftCallCC callCC
 
 {- | @since 2.2 -}
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadCont m) => MonadCont (ExceptT e m) where
+instance (MonadCont m) => MonadCont (ExceptT e m) where
     callCC = Except.liftCallCC callCC
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadCont m) => MonadCont (IdentityT m) where
+instance (MonadCont m) => MonadCont (IdentityT m) where
     callCC = Identity.liftCallCC callCC
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadCont m) => MonadCont (ListT m) where
+instance (MonadCont m) => MonadCont (ListT m) where
     callCC = List.liftCallCC callCC
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadCont m) => MonadCont (MaybeT m) where
+instance (MonadCont m) => MonadCont (MaybeT m) where
     callCC = Maybe.liftCallCC callCC
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadCont m) => MonadCont (ReaderT r m) where
+instance (MonadCont m) => MonadCont (ReaderT r m) where
     callCC = Reader.liftCallCC callCC
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       Monoid w, MonadCont m) => MonadCont (LazyRWS.RWST r w s m) where
+instance (Monoid w, MonadCont m) => MonadCont (LazyRWS.RWST r w s m) where
     callCC = LazyRWS.liftCallCC' callCC
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       Monoid w, MonadCont m) => MonadCont (StrictRWS.RWST r w s m) where
+instance (Monoid w, MonadCont m) => MonadCont (StrictRWS.RWST r w s m) where
     callCC = StrictRWS.liftCallCC' callCC
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       MonadCont m) => MonadCont (LazyState.StateT s m) where
+instance (MonadCont m) => MonadCont (LazyState.StateT s m) where
     callCC = LazyState.liftCallCC' callCC
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-      MonadCont m) => MonadCont (StrictState.StateT s m) where
+instance (MonadCont m) => MonadCont (StrictState.StateT s m) where
     callCC = StrictState.liftCallCC' callCC
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       Monoid w, MonadCont m) => MonadCont (LazyWriter.WriterT w m) where
+instance (Monoid w, MonadCont m) => MonadCont (LazyWriter.WriterT w m) where
     callCC = LazyWriter.liftCallCC callCC
 
-instance (
-#if MIN_VERSION_base(4,16,0)
-       Total m,
-#endif
-       Monoid w, MonadCont m) => MonadCont (StrictWriter.WriterT w m) where
+instance (Monoid w, MonadCont m) => MonadCont (StrictWriter.WriterT w m) where
     callCC = StrictWriter.liftCallCC callCC
